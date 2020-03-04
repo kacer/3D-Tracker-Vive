@@ -1,0 +1,5 @@
+.pio
+.vscode
+
+hardware/*.s#*
+hardware/*.b#*
