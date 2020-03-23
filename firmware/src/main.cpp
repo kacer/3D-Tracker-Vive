@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "gpio/nrf52_gpio.h"
+#include "position.h"
 
 typedef struct {
   uint32_t raising_time_ticks;
@@ -12,6 +13,7 @@ uint32_t pulses[TOTAL_PULSES];  //in ticks
 uint16_t pulsesCount = 0;
 bool printed = false;
 bool debug_micros = true;
+bool coordsWithCaption = false;
 
 
 #define TICK                      0.0625      //us
@@ -32,8 +34,11 @@ uint8_t basestation_index = 0;
 uint32_t resetCyclesCount = 0;
 
 #define TOTAL_ANGLES        50
-double_t angles[TOTAL_ANGLES][4];
+float32_t angles[TOTAL_ANGLES][4];
 uint16_t anglesCount = 0;
+
+float32_t anglesBuffer[4];
+bool anglesProccesed = true;
 
 /**
  * @brief Function returns integer number which expresses bits of
@@ -47,7 +52,7 @@ int8_t decodePulse(int32_t pulseLengthTicks) {
 }
 
 void computeAngles(void) {
-  double_t angs[4];
+  float32_t angs[4];
   for(uint8_t c = 0; c < CYCLES_COUNT; c++) {
     if(sweepPulses[c].raising_time_ticks == UINT32_MAX) { // sweep pulse was not detected
       return;
@@ -61,9 +66,13 @@ void computeAngles(void) {
     angs[c] = ((int32_t) time - (int32_t) centerCycleLengthInTicks) * PI / (int32_t) cyclePeriodLengthInTicks;
   }
 
-  if(anglesCount < TOTAL_ANGLES) {
-    memcpy(angles[anglesCount++], angs, sizeof angs);
+  if(anglesProccesed) {
+    memcpy(anglesBuffer, angs, sizeof angs);
+    anglesProccesed = false;
   }
+  /*if(anglesCount < TOTAL_ANGLES) {
+    memcpy(angles[anglesCount++], angs, sizeof angs);
+  }*/
 }
 
 void resetPulses(void) {
@@ -168,9 +177,7 @@ extern "C" {  //important; otherwise irq handler won't be called
       if(cycle == 4) {
         // start of new cycle
         cycle = 0;
-        // if we have 4 angles then star computing a new position? probably bad idea..
         computeAngles();
-        // set every pulse to MAX_INT or something (clear them)
         resetPulses();
       }
 
@@ -270,7 +277,30 @@ void setup() {
 }
 
 void loop() {
-  if(anglesCount == TOTAL_ANGLES && !printed) {
+  if(!anglesProccesed) {
+    vec3d xyz;
+    bool res = calcPosition(anglesBuffer, xyz);
+    if(res) {
+      if(coordsWithCaption) {
+        Serial.print("x: ");
+        Serial.print(xyz[0], 3);
+        Serial.print(" y: ");
+        Serial.print(xyz[1], 3);
+        Serial.print(" z: ");
+        Serial.println(xyz[2], 3);
+      } else {
+        Serial.print(xyz[0], 6);
+        Serial.print(" ");
+        Serial.print(xyz[1], 6);
+        Serial.print(" ");
+        Serial.println(xyz[2], 6);
+      }
+    } else {
+      Serial.println("Calculation was not successful");
+    }
+    anglesProccesed = true;
+  }
+  /*if(anglesCount == TOTAL_ANGLES && !printed) {
     for(uint16_t i = 0; i < TOTAL_ANGLES; i++) {
       for(uint8_t a = 0; a < 4; a++) {
         Serial.print(angles[i][a]);
@@ -279,7 +309,7 @@ void loop() {
       Serial.println();
     }
     printed = true;
-  }
+  }*/
   /*if(pulsesCount == TOTAL_PULSES && !printed) {   
     for(uint16_t i = 0; i < pulsesCount; i++) {
         if(debug_micros) {
