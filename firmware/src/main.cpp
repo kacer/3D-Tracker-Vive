@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <SPI.h>
+#include <BLEPeripheral.h>
 #include "gpio/nrf52_gpio.h"
 #include "position.h"
 #include "pulse_processor.h"
@@ -10,6 +12,11 @@ uint16_t pulsesCount = 0;
 bool printed = false;
 bool debug_micros = true;
 bool coordsWithCaption = false;
+
+BLEPeripheral ledPeripheral = BLEPeripheral();
+
+BLEService ledService = BLEService("19b10000e8f2537e4f6cd104768a1214");
+BLECharCharacteristic ledCharacteristic = BLECharCharacteristic("19b10001e8f2537e4f6cd104768a1214", BLERead | BLEWrite);
 
 
 void anglesCb(float32_t *angles) {
@@ -61,6 +68,14 @@ void setup() {
   Serial.setPins(A_PIN_UART_RX, A_PIN_UART_TX);
   Serial.begin(115200);
 
+  pinMode(PIN_BLUE_LED, OUTPUT);
+  digitalWrite(PIN_BLUE_LED, HIGH);
+  ledPeripheral.setAdvertisedServiceUuid(ledService.uuid());
+  ledPeripheral.addAttribute(ledService);
+  ledPeripheral.addAttribute(ledCharacteristic);
+  ledPeripheral.setLocalName("3D Tracker");
+  ledPeripheral.begin();
+
   // setting GPIOTE channels for raising and falling edge
   uint8_t pin_D = 24;   //P0.24 real pin number, not index (12)
   uint8_t port_pin_D = 0;
@@ -88,8 +103,8 @@ void setup() {
   NRF_PPI->CH[gpiote_channel_raising].TEP = (uint32_t) &NRF_TIMER1->TASKS_CAPTURE[gpiote_channel_raising];
   NRF_PPI->CH[gpiote_channel_falling].EEP = (uint32_t) &NRF_GPIOTE->EVENTS_IN[gpiote_channel_falling];
   NRF_PPI->CH[gpiote_channel_falling].TEP = (uint32_t) &NRF_TIMER1->TASKS_CAPTURE[gpiote_channel_falling];
-  NRF_PPI->CHEN = ((uint32_t) PPI_CHEN_CH0_Enabled << PPI_CHEN_CH0_Pos)
-                  | ((uint32_t) PPI_CHEN_CH1_Enabled << PPI_CHEN_CH1_Pos);
+  NRF_PPI->CHENSET = ((uint32_t) PPI_CHENSET_CH0_Enabled << PPI_CHENSET_CH0_Pos)
+                  | ((uint32_t) PPI_CHENSET_CH1_Enabled << PPI_CHENSET_CH1_Pos);
 
   // start TIMER1
   NRF_TIMER1->TASKS_START = 1;
@@ -97,4 +112,18 @@ void setup() {
 
 void loop() {
   pulseProcessor.loop();
+  
+  BLECentral central = ledPeripheral.central();
+  if (central) {
+    //while (central.connected()) {
+      if (ledCharacteristic.written()) {
+        if (ledCharacteristic.value()) {
+          digitalWrite(PIN_BLUE_LED, LOW);
+        }
+        else{
+          digitalWrite(PIN_BLUE_LED, HIGH);
+        }
+      }
+    //}
+  }
 }
