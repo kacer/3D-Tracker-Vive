@@ -43,7 +43,7 @@ void PulseProcessor::loop(void) {
         if(startCycleCandidate) {
             // candidate pulse was detected
             uint32_t diff = pulse.raising_time_ticks - startTime;
-            if(diff >= MICROSECS_IN_TICKS(400) && diff <= MICROSECS_IN_TICKS(420)) {
+            if(diff >= MICROSECS_IN_TICKS(390) && diff <= MICROSECS_IN_TICKS(430)) {
                 // start of cycle was detected
                 cycleSynchronized = true;
                 baseStationIndex = 2;
@@ -57,11 +57,25 @@ void PulseProcessor::loop(void) {
     }
     if(!cycleSynchronized) return;
 
-    if(baseStationIndex == 2) { // end of one cycle
-        cycle++;
-        baseStationIndex = 0;
+    switch(baseStationIndex) {
+        case 1:
+            {
+                uint32_t diff = pulse.raising_time_ticks - startOfCycleTime;
+                if(!(diff >= MICROSECS_IN_TICKS(390) && diff <= MICROSECS_IN_TICKS(430))) {
+                    // some sync pulses were missed
+                    resetCycle();
+
+                    return;
+                }
+            }
+            break;
+        case 2:     // end of one cycle  
+            cycle++;
+            baseStationIndex = 0;
+            break;
     }
-    if(cycle == CYCLES_COUNT) { // end of full cycle
+    
+    if(cycle == CYCLES_COUNT) { // end of full cycle (4 cycles = 4 angles)
         if(anglesCount == ANGLES_COUNT) { 
             angleCb(angles);   // let's propagate caught angles
         }
@@ -72,6 +86,10 @@ void PulseProcessor::loop(void) {
     if((cycle / 2 == 0 && baseStationIndex == 0) ||
         (cycle / 2 == 1 && baseStationIndex == 1)) {
         startTime = pulse.raising_time_ticks;
+    }
+
+    if(baseStationIndex == 0) { // start of one cycle
+        startOfCycleTime = pulse.raising_time_ticks;
     }
     baseStationIndex++;
 }
@@ -106,6 +124,10 @@ int8_t PulseProcessor::decodePulse(Pulse &pulse) {
 void PulseProcessor::computeAngle(Pulse &pulse) {
     uint32_t time = (pulse.raising_time_ticks + pulse.length_ticks / 2) - startTime;
     if(time < sweepStartWindowInTicks || time > sweepEndWindowsInTicks) { // sweep pulse was in invalid range
+        return;
+    }
+
+    if(anglesCount > cycle) {   // second "sweep" pulse in one cycle, could be some kind of reflection
         return;
     }
 

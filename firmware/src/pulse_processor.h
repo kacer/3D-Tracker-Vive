@@ -30,6 +30,7 @@ class PulseProcessor {
         uint8_t anglesCount = 0;
         bool cycleSynchronized = false;
         bool startCycleCandidate = false;
+        uint32_t startOfCycleTime;
         uint32_t startTime;     // time at rotor reached 0°
         uint8_t cycle = 0;      // cycle 0 - 3
         uint8_t baseStationIndex = 0;
