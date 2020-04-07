@@ -1,3 +1,5 @@
+#pragma once
+
 #include <nrf.h>
 #include <wiring_constants.h>
 #include <Arduino.h>

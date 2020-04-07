@@ -1,4 +1,4 @@
-#include "nrf52_gpio.h"
+#include "tracker_gpio.h"
 
 void pinMode(GPIO_PIN pin, uint32_t mode) {
     if(!(pin.port == 0 || pin.port == 1) || pin.number > 31) { // nRF52840 has P0 or P1 with pin 0 - 31
