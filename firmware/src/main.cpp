@@ -140,6 +140,8 @@ void setup() {
 
     if(!waitForLight(LIGHT_TIMEOUT)) {
         ledDriver.showFailed();
+    } else {
+        ledDriver.showGeometryNotSet();
     }
 }
 
