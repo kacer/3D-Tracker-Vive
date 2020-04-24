@@ -101,6 +101,10 @@ void setup() {
     bluetooth->setup();
     ledDriver.setup();
 
+    // set pull-down for button to prevent accidental damage
+    // the button is not used for now
+    pinMode(PIN_BTN1, INPUT_PULLDOWN);
+
     // setting GPIOTE channels for raising and falling edge
     uint8_t pin_D = PIN_D_TS4231.number; 
     uint8_t port_pin_D = PIN_D_TS4231.port;
