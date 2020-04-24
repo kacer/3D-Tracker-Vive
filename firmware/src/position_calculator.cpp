@@ -22,11 +22,11 @@ void PositionCalculator::setBaseStationsGeometry(BaseStation b0, BaseStation b1)
 }
 
 void PositionCalculator::calcRayVector(BaseStation &baseStation, float32_t angle1, float32_t angle2, vec3d &res) {
-    vec3d vertical = {arm_cos_f32(angle1), 0, -arm_sin_f32(angle1)};
-    vec3d horizontal = {0, arm_cos_f32(angle2), arm_sin_f32(angle2)};
+    vec3d vertical = {0, arm_cos_f32(angle2), arm_sin_f32(angle2)};
+    vec3d horizontal = {arm_cos_f32(angle1), 0, -arm_sin_f32(angle1)};
 
     vec3d ray = {};
-    vectorCrossProduct(horizontal, vertical, ray);
+    vectorCrossProduct(vertical, horizontal, ray);
     normalizeVector(ray);
 
     arm_matrix_instance_f32 stationRotMatrix = {3, 3, baseStation.rotationMatrix};

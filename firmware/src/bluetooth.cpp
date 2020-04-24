@@ -13,14 +13,6 @@ void charRotationWritten(BLECentral &central, BLECharacteristic &characteristic)
     Bluetooth::getInstance()->rotationWritten(central, characteristic);
 }
 
-void Bluetooth::printBytes(unsigned char* ptr, unsigned char size) {
-    for(uint8_t i = 0; i < size; i++) {
-        Serial.print(ptr[i]);
-        Serial.print(" ");
-    }
-    Serial.println();
-}
-
 
 Bluetooth* Bluetooth::instance = 0;
 
@@ -80,20 +72,6 @@ void Bluetooth::stationNumberWritten(BLECentral &central, BLECharacteristic &cha
     if(value < baseStationsCount && characteristic.valueLength() == sizeof(uint8_t)) {
         // set the new written base station index
         baseStationIndex = value;
-
-        Serial.print("Index: ");
-        Serial.println(baseStationIndex);
-        Serial.print("Position: ");
-        printBytes((unsigned char*) baseStations[baseStationIndex].origin, sizeof(Vec3));
-        Serial.print("Position values: ");
-        Serial.print(baseStations[baseStationIndex].origin[0], 5);
-        Serial.print(" ");
-        Serial.print(baseStations[baseStationIndex].origin[1], 5);
-        Serial.print(" ");
-        Serial.print(baseStations[baseStationIndex].origin[2], 5);
-        Serial.println();
-        Serial.print("Rotation: ");
-        printBytes((unsigned char*) baseStations[baseStationIndex].rotationMatrix, sizeof(Mat3));
 
         // update characteristic values
         setPositionCharValueByIndex();

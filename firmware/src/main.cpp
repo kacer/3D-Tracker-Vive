@@ -7,22 +7,6 @@
 #include "bluetooth.h"
 #include "led_driver.h"
 
-/************DEBUG************/
-BaseStation baseStation0 = {
-    {-0.462107, -0.199174, 0.864169,
-     0.002075, 0.974207, 0.225645,
-      -0.886822, 0.106065, -0.449775}, // rotation matrix by rows
-    {1.548505, 1.168343, -1.145540}  // origin
-};
-
-BaseStation baseStation1 = {
-    {-0.741860, 0.160941, -0.650955,
-     -0.007757, 0.968645, 0.248326,
-      0.670510, 0.189273, -0.717351}, // rotation matrix by rows
-    {-0.862957, 1.201664, -1.565771}  // origin
-};
-
-/*************ABOVE THIS REMOVE!***************/
 
 void anglesCb(float32_t *angles);
 void baseStationGeometryCB(BaseStation *baseStations);
@@ -70,13 +54,14 @@ void anglesCb(float32_t *angles) {
             bluetooth->sendPosition(xyz);
             ledDriver.showTracking();
             receivingCoordinates = true;
-            /*
-            Serial.print(xyz[0], 6);
-            Serial.print(" ");
-            Serial.print(xyz[1], 6);
-            Serial.print(" ");
-            Serial.println(xyz[2], 6);
-            */
+            
+            #ifdef DEBUG
+                Serial.print(xyz[0], 6);
+                Serial.print(" ");
+                Serial.print(xyz[1], 6);
+                Serial.print(" ");
+                Serial.println(xyz[2], 6);
+            #endif
             break;
         case BASESTATIONS_NOT_SET:
             ledDriver.showGeometryNotSet();
@@ -94,11 +79,6 @@ void baseStationGeometryCB(BaseStation *baseStations) {
     // clear state showing that geometry is not set
     receivingCoordinates = true;
     ledDriver.showTracking();
-
-    Bluetooth::getInstance()->printBytes((unsigned char*) baseStations[0].origin, sizeof(vec3d));
-    Bluetooth::getInstance()->printBytes((unsigned char*) baseStations[0].rotationMatrix, sizeof(mat3Array));
-    Bluetooth::getInstance()->printBytes((unsigned char*) baseStations[1].origin, sizeof(vec3d));
-    Bluetooth::getInstance()->printBytes((unsigned char*) baseStations[1].rotationMatrix, sizeof(mat3Array));
 }
 
 bool waitForLight(uint16_t timeout) {
@@ -143,7 +123,7 @@ void setup() {
     NRF_TIMER1->PRESCALER = 0;    // 16MHz
     NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
 
-    // config PPI for transfering events of rising/falling edge on pin E to TIMER1 for capturing timestamps
+    // config PPI for transfering events of rising/falling edge on pin D to TIMER1 for capturing timestamps
     NRF_PPI->CH[gpiote_channel_raising].EEP = (uint32_t) &NRF_GPIOTE->EVENTS_IN[gpiote_channel_raising];
     NRF_PPI->CH[gpiote_channel_raising].TEP = (uint32_t) &NRF_TIMER1->TASKS_CAPTURE[gpiote_channel_raising];
     NRF_PPI->CH[gpiote_channel_falling].EEP = (uint32_t) &NRF_GPIOTE->EVENTS_IN[gpiote_channel_falling];

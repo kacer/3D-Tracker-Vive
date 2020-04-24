@@ -68,7 +68,7 @@ void LedDriver::loop(void) {
 
     uint32_t currentMillis = millis();
     if(!startMillis) {
-        // the start of whole cycles
+        // the start of whole cycle
         startMillis = currentMillis;
         isLedTurnOn = true;
     }

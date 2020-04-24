@@ -30,7 +30,6 @@ class Bluetooth {
         void poll(void);
         void setBaseStationGeometryCB(cb_baseStationGeometry pCallback);
         void setup(void);
-        void printBytes(unsigned char* ptr, unsigned char size);
 
         void stationNumberWritten(BLECentral &central, BLECharacteristic &characteristic);
         void positionWritten(BLECentral &central, BLECharacteristic &characteristic);
@@ -53,7 +52,7 @@ class Bluetooth {
         /**
          * @brief Set the Row To Rotation Matrix object
          * 
-         * @param rowNum starts from 0 .. [0 - 2]
+         * @param rowNum range [0 - 2]
          * @param row value of row to be set
          */
         void setRowToRotationMatrix(uint8_t rowNum, Vec3 row);

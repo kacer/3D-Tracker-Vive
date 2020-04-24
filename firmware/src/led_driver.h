@@ -8,8 +8,8 @@ const uint8_t STATE_TRACKING_TIMEOUT = 3;
 const uint8_t STATE_GEOMETRY_NOT_SET = 4;
 
 typedef struct {
-    uint16_t turnOn;
-    uint16_t turnOff;
+    uint16_t turnOn;    // ms
+    uint16_t turnOff;   // ms
     GPIO_PIN led;
 } LedTimings;
 
